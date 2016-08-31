@@ -24,12 +24,16 @@ function love.load()
 ]]
   connectionToSend = socket.tcp()
   connectionToRecv = socket.tcp()
+  
+  print("Try to connect listen channel")
   ret, err = connectionToSend:connect("127.0.0.1", 1212)
   print("1")
   if not ret then
     print ("Unable to connect ot server: " .. err)
     --love.event.quit(0)
   end
+  
+  print("Send request for ID")
   ret, err = connectionToSend:send('{"id": "None"}\n')
   print("1")
   if not ret then
@@ -37,6 +41,7 @@ function love.load()
     --love.event.quit(0)
   end
   
+  print("Read working ID")
   sid, err = connectionToSend:receive('*l')
   print(sid)
   if not sid then
@@ -44,23 +49,22 @@ function love.load()
     --love.event.quit(0)
   end
   id = json.decode(sid)
-  print(id.id)
   id = id.id
 
+  print("Try to connect receive channel")
   ret, err = connectionToRecv:connect("127.0.0.1", 1212)
-  print("1")
   if not ret then
     print ("Unable to connect to server: " .. err)
     --love.event.quit(0)
   end
+  print("Send second ID")
   ret, err = connectionToRecv:send('{"id": ' .. id .. '}')  
-  print("1")
   if not ret then
     print ("Unable to send 'ID' message: " .. err)
     --love.event.quit(0)
   end
+  print("Send request")
   connectionToSend:send('{"request": "command", "args": "arguments"}\n')
-  print("1")
 --end
 
 --[[

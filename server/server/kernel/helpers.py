@@ -1,10 +1,13 @@
 import time, datetime, threading
 
+print_lock = threading.Lock()
+
 def LogMessage(msg):
-    ts = time.time()
-    dt = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-    thread = threading.current_thread().name
-    print "%s <%s> %s" % (dt, thread, msg)
+    with print_lock:
+        ts = time.time()
+        dt = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        thread = threading.current_thread().name
+        print "%s <%s> %s" % (dt, thread, msg)
 
 def Error(msg):
     LogMessage("[ERR] " + str(msg))
@@ -26,5 +29,5 @@ def SafeCall(func):
             return func(self, *args, **kwargs)
         except Exception as e:
             Error("Exception during %s execution:\n\t%s" % (func.__name__, str(e)))
-            raise
+            #raise
     return Caller
