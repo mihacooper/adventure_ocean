@@ -43,7 +43,8 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
                     jdata = json.loads(data)
                     if jdata.get('request')is None or jdata.get('args') is None:
                         raise Exception("Invalid request format")
-                    Dispatcher().Send(jdata.get('request'), jdata.get('args'))
+                    args = {'args' : jdata.get('args'), 'id' : self.id}
+                    Dispatcher().Send(jdata.get('request'), args)
 
     @SafeCall
     def SendHandle(self, _, params):

@@ -5,6 +5,7 @@ from helpers import *
 EVENT_INIT = 0
 EVENT_NEW_CHUNK = 1
 EVENT_SEND = 2
+EVENT_DATA_REQUEST = 3
 
 class Dispatcher(object):
     class __Dispatcher:
