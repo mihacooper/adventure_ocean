@@ -17,6 +17,7 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
         if jdata["id"] == "None":
             self.is_sender = False
             self.id = str(hash(self.client_address[0] + str(self.client_address[1])))
+            Info("Send response '%s'" % self.id)
             self.wfile.write('{"id": "%s"}\n' % self.id)
         else:
             self.is_sender = True

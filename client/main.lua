@@ -1,11 +1,6 @@
 math = require "math"
-socket = require "socket"
-json = require "json"
+Listener = require "listener"
 
-connectionToSend = nil
-connectionToRecv = nil
-
---[[
 function love.load()
   local window_width = love.graphics.getWidth()
   local window_height = love.graphics.getHeight()
@@ -20,54 +15,14 @@ function love.load()
   else
     love.window.setMode(window_width, window_height, {fullscreen = true})
   end
-  return
-]]
-  connectionToSend = socket.tcp()
-  connectionToRecv = socket.tcp()
-  
-  print("Try to connect listen channel")
-  ret, err = connectionToSend:connect("127.0.0.1", 1212)
-  print("1")
-  if not ret then
-    print ("Unable to connect ot server: " .. err)
-    --love.event.quit(0)
-  end
-  
-  print("Send request for ID")
-  ret, err = connectionToSend:send('{"id": "None"}\n')
-  print("1")
-  if not ret then
-    print ("Unable to send 'Hello' message: " .. err)
-    --love.event.quit(0)
-  end
-  
-  print("Read working ID")
-  sid, err = connectionToSend:receive('*l')
-  print(sid)
-  if not sid then
-    print ("Unable to receive self ID: " .. err)
-    --love.event.quit(0)
-  end
-  id = json.decode(sid)
-  id = id.id
 
-  print("Try to connect receive channel")
-  ret, err = connectionToRecv:connect("127.0.0.1", 1212)
-  if not ret then
-    print ("Unable to connect to server: " .. err)
-    --love.event.quit(0)
+  listener = Listener.Create()
+  if listener == nil then
+    print("Unable to create Listener, quit")
+    love.event.quit(0)
   end
-  print("Send second ID")
-  ret, err = connectionToRecv:send('{"id": ' .. id .. '}')  
-  if not ret then
-    print ("Unable to send 'ID' message: " .. err)
-    --love.event.quit(0)
-  end
-  print("Send request")
-  connectionToSend:send('{"request": "command", "args": "arguments"}\n')
---end
+end
 
---[[
 function love.update(dt)
 end
  
@@ -77,9 +32,16 @@ end
 function love.keypressed(k)
     if k == 'escape' then
       love.event.quit(0)
-      --  love.event.push('q')
+    elseif k == 'a' then
+        listener:Send({request = "Move", args = {direction = "left"}})
+    elseif k == 'w' then
+        listener:Send({request = "Move", args = {direction = "up"}})
+    elseif k == 'd' then
+        listener:Send({request = "Move", args = {direction = "right"}})
+    elseif k == 's' then
+        listener:Send({request = "Move", args = {direction = "down"}})
     end
 end
+
 function love.draw()
 end
-]]
