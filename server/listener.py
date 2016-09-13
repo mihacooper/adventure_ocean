@@ -1,13 +1,13 @@
 import SocketServer, json, Queue, socket, threading
 
-from server.kernel.dispatcher import Dispatcher, EVENT_SEND
+from server.kernel.dispatcher import Dispatcher, EVENT_SEND, EVENT_NEW_CLIENT
 from server.kernel.helpers import *
 from server.kernel.object_templates import TransmittableObject
 
 ServerStop = False
 
 class ConnectionHandler(SocketServer.StreamRequestHandler):
-    @SafeCall
+    @SilentSafeCall
     def SenderBody(self):
         data_to_send = []
         with self.queue_lock:
@@ -22,7 +22,7 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
             Info("Send data to (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(jdata)))
             self.wfile.write(jdata)
 
-    @SafeCall
+    @SilentSafeCall
     def ReceiverBody(self):
         data = self.rfile.readline().strip()
         if data:
@@ -55,11 +55,12 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
             self.id = jdata["id"]
             Dispatcher().Subscribe((EVENT_SEND, self.id), self.SendHandle)
 
+        Dispatcher().Send(EVENT_NEW_CLIENT, self.id)
         while not ServerStop:
             if self.is_sender:
-                SenderBody()
+                self.SenderBody()
             else:
-                ReceiverBody()
+                self.ReceiverBody()
 
     @SafeCall
     def SendHandle(self, _, params):

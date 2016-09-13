@@ -47,7 +47,7 @@ local Listener =
     t.connectionToRecv = ConnectionToRecv
 
     function t:Send(data)
-      local ret, jdata = SafeCall(json.encode, data, true)
+      local ret, jdata = SafeCall(json.encode, data, true3)
       if not ret then
         print ("Unable to parse data to json")
         return false

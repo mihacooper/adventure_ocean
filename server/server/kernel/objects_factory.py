@@ -8,16 +8,33 @@ class ObjFactory(object):
 
         @SafeCall
         def Add(self, ind, obj):
-			with self.lock:
-				if self.objects.get(ind) is None:
-					self.objects[ind] = obj
-					return True
-				return False
+            with self.lock:
+                if self.objects.get(ind) is None:
+                    Debug("Add new object %s, id=%s" % (repr(obj), ind))
+                    self.objects[ind] = obj
+                    return True
+                else:
+                    Error("Unable to add object %s with id=%s (already exists %s)"
+                          % (repr(obj), ind, repr(self.objects.get(ind)))
+                    )
+                return False
+
+        @SafeCall
+        def Remove(self, ind):
+            with self.lock:
+                obj = self.objects.get(ind)
+                if obj is not None:
+                    Debug("Delete object %s, id=%s" %(repr(obj), ind))
+                    self.objects[ind] = None
+                    return True
+                else:
+                    Error("Unable to delete object, id=%s. Object is not found" % ind)
+                return False
 
         @SafeCall
         def Get(self, ind):
-        	with self.lock:
-        		return self.objects.get(ind)
+            with self.lock:
+                return self.objects.get(ind)
 
     instance = None
 

@@ -22,10 +22,20 @@ def Debug(msg):
     LogMessage("[DBG] " + str(msg))
 
 # Decorator
+def SilentSafeCall(func):
+    def Caller(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            Error("Exception during %s execution:\n\t%s" % (func.__name__, str(e)))
+            #raise
+    return Caller
+
+# Decorator
 def SafeCall(func):
     def Caller(self, *args, **kwargs):
-        Debug("Call %s(%s, %s)" % (func.__name__, args, kwargs))
         try:
+            Debug("Call %s(%s, %s)" % (func.__name__, args, kwargs))
             return func(self, *args, **kwargs)
         except Exception as e:
             Error("Exception during %s execution:\n\t%s" % (func.__name__, str(e)))
