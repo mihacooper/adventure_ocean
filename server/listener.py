@@ -2,9 +2,37 @@ import SocketServer, json, Queue, socket, threading
 
 from server.kernel.dispatcher import Dispatcher, EVENT_SEND
 from server.kernel.helpers import *
+from server.kernel.object_templates import TransmittableObject
 
+ServerStop = False
 
 class ConnectionHandler(SocketServer.StreamRequestHandler):
+    @SafeCall
+    def SenderBody(self):
+        data_to_send = []
+        with self.queue_lock:
+            while not self.queue.empty():
+                data_to_send.append(self.queue.get())
+        if len(data_to_send) > 0:
+            def JsonParser(data):
+                if isinstance(data, TransmittableObject):
+                    return data.GetFields
+                return data
+            jdata = json.dump(data_to_send, default = JsonParser)
+            Info("Send data to (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(jdata)))
+            self.wfile.write(jdata)
+
+    @SafeCall
+    def ReceiverBody(self):
+        data = self.rfile.readline().strip()
+        if data:
+            Info("Received data (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(data)))
+            jdata = json.loads(data)
+            if jdata.get('request')is None or jdata.get('args') is None:
+                raise Exception("Invalid request format")
+            args = {'args' : jdata.get('args'), 'id' : self.id}
+            Dispatcher().Send(jdata.get('request'), args)
+
     @SafeCall
     def handle(self):
         Info("Accept connection from %s:%d" % (self.client_address[0], self.client_address[1]))
@@ -27,25 +55,11 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
             self.id = jdata["id"]
             Dispatcher().Subscribe((EVENT_SEND, self.id), self.SendHandle)
 
-        while True:
+        while not ServerStop:
             if self.is_sender:
-                data_to_send = []
-                with self.queue_lock:
-                    while not self.queue.empty():
-                        data_to_send.append(self.queue.get())
-                if len(data_to_send) > 0:
-                    jdata = json.dump(data_to_send)
-                    Info("Send data to (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(jdata)))
-                    self.wfile.write(jdata)
+                SenderBody()
             else:
-                data = self.rfile.readline().strip()
-                if data:
-                    Info("Received data (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(data)))
-                    jdata = json.loads(data)
-                    if jdata.get('request')is None or jdata.get('args') is None:
-                        raise Exception("Invalid request format")
-                    args = {'args' : jdata.get('args'), 'id' : self.id}
-                    Dispatcher().Send(jdata.get('request'), args)
+                ReceiverBody()
 
     @SafeCall
     def SendHandle(self, _, params):
@@ -71,6 +85,7 @@ class Server(object):
         Info("Server has been started")
 
     def Stop(self):
+        ServerStop = True
         Info("Stop server...")
         self.socketServer.shutdown()
         self.serverThread.join(timeout = 60)
