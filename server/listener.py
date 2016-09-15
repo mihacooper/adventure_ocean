@@ -2,9 +2,11 @@ import SocketServer, json, Queue, socket, threading
 
 from server.kernel.dispatcher import Dispatcher, EVENT_SEND, EVENT_NEW_CLIENT
 from server.kernel.helpers import *
-from server.kernel.object_templates import TransmittableObject
+from server.kernel.objects_factory import ObjFactory
 
 ServerStop = False
+ConnQueue = {}
+ConnQueueLock = threading.Lock()
 
 class ConnectionHandler(SocketServer.StreamRequestHandler):
     @SilentSafeCall
@@ -15,8 +17,8 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
                 data_to_send.append(self.queue.get())
         if len(data_to_send) > 0:
             def JsonParser(data):
-                if isinstance(data, TransmittableObject):
-                    return data.GetFields
+                if isinstance(data, dict) and data.get("transmittable"):
+                    return lambda: { x: data[x] for x in data["transmittable"] }
                 return data
             jdata = json.dump(data_to_send, default = JsonParser)
             Info("Send data to (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(jdata)))
@@ -30,8 +32,7 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
             jdata = json.loads(data)
             if jdata.get('request')is None or jdata.get('args') is None:
                 raise Exception("Invalid request format")
-            args = {'args' : jdata.get('args'), 'id' : self.id}
-            Dispatcher().Send(jdata.get('request'), args)
+            Dispatcher().Send(jdata.get('request'), self.id, jdata.get('args'))
 
     @SafeCall
     def handle(self):
@@ -45,17 +46,36 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
         if jdata["id"] == "None":
             self.is_sender = False
             self.id = str(hash(self.client_address[0] + str(self.client_address[1])))
+            with ConnQueueLock:
+                ConnQueue[self.id] = [threading.Event(), threading.Event()]
             Info("Send response '%s'" % self.id)
             self.wfile.write('{"id": "%s"}\n' % self.id)
+            Info("Receiver waits until sender appearance")
+            if ConnQueue[self.id][0].wait(10) is not True:
+                Throw("Receiver thread timed out, sender had not appeared")
+            Info("Receiver waits while sender thread initialization")
+            ConnQueue[self.id][1].wait()
+            Info("Receiver starts working")
+            with ConnQueueLock:
+                ConnQueue[self.id] = None
         else:
+            # TODO: CHANGE THIS SHIT!!!
+            self.id = str(jdata["id"])
+            with ConnQueueLock:
+                if ConnQueue.get(self.id) is None:
+                    Throw("Sender thread has not pair thread!")
+                ConnQueue[self.id][0].set()
             self.is_sender = True
             self.queue = Queue.Queue()
             self.queue_lock = threading.Lock()
-            # TODO: CHANGE THIS SHIT!!!
-            self.id = jdata["id"]
             Dispatcher().Subscribe((EVENT_SEND, self.id), self.SendHandle)
+            ObjFactory().Add(self.id, {"transmittable" : []})
+            Dispatcher().Send(EVENT_NEW_CLIENT, self.id)
+            with ConnQueueLock:
+                if ConnQueue.get(self.id) is None:
+                    Throw("Sender thread unable to communicate with pair thread!")
+                ConnQueue[self.id][1].set()
 
-        Dispatcher().Send(EVENT_NEW_CLIENT, self.id)
         while not ServerStop:
             if self.is_sender:
                 self.SenderBody()
@@ -86,8 +106,8 @@ class Server(object):
         Info("Server has been started")
 
     def Stop(self):
-        ServerStop = True
+        ConnectionHandler.ServerStop = True
         Info("Stop server...")
         self.socketServer.shutdown()
         self.serverThread.join(timeout = 60)
-        Info("Server has been stoped")
+        Info("Server has been stopped")

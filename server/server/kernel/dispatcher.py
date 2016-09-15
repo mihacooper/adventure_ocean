@@ -15,8 +15,10 @@ class Dispatcher(object):
             self.sender_thread.start()
 
         def Uninitialize(self):
+            Info("Stop dispatcher...")
             self.sender_stop = True
             self.sender_thread.join(5)
+            Info("Dispatcher has been stopped")
 
         def __Sender(self):
             while not self.sender_stop:
@@ -26,7 +28,6 @@ class Dispatcher(object):
 
         @SafeCall
         def Send(self, event, *args, **kwargs):
-            Info("Add event to queue %s(%s, %s)" % (self.GetEventName(event), str(*args), str(**kwargs)))
             self.queue.put_nowait((event, args, kwargs))
 
         @SafeCall
@@ -72,6 +73,7 @@ Dispatcher().DeclareEvents(
     EVENT_INIT          = 0,
     EVENT_NEW_CHUNK     = 1,
     EVENT_SEND          = 2,
-    EVENT_DATA_REQUEST  = 3,
-    EVENT_NEW_CLIENT    = 4
+    EVENT_DATA_REQUEST  = "GET_DATA",
+    EVENT_NEW_CLIENT    = 4,
+    EVENT_MOVEMENT      = "MOVEMENT"
 )

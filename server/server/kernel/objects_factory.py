@@ -1,4 +1,5 @@
 from helpers import *
+import copy
 
 class ObjFactory(object):
     class __ObjFactory:
@@ -20,6 +21,14 @@ class ObjFactory(object):
                 return False
 
         @SafeCall
+        def Update(self, ind, obj):
+            with self.lock:
+                if self.objects.get(ind) is None:
+                    Warning("Updated object does not exist, id=%s" % ind)
+                Debug("Update object %s, id=%s" %(repr(obj), ind))
+                self.objects[ind] = obj
+
+        @SafeCall
         def Remove(self, ind):
             with self.lock:
                 obj = self.objects.get(ind)
@@ -34,7 +43,10 @@ class ObjFactory(object):
         @SafeCall
         def Get(self, ind):
             with self.lock:
-                return self.objects.get(ind)
+                obj = copy.deepcopy(self.objects.get(ind))
+                if obj is None:
+                    Error("Unable to find object with ID=%s" % ind)
+                return obj
 
     instance = None
 

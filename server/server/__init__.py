@@ -10,8 +10,8 @@ if len(models) == 0:
         gname = re.match("^mod_(\w+)\.py$", file)
         if gname:
             name = "server.mod_" + gname.group(1)
-            model = importlib.import_module(name)
+            loader = importlib.import_module(name)
             Info("Model %s was loaded" % name)
-            model.Initialize()
+            model = loader.Initialize()
             models.append(model)
     Info("Model loading finished")

@@ -33,13 +33,13 @@ function love.keypressed(k)
     if k == 'escape' then
       love.event.quit(0)
     elseif k == 'a' then
-        listener:Send({request = "Move", args = {direction = "left"}})
+        listener:Send({request = "MOVEMENT", args = {direction = "left"}})
     elseif k == 'w' then
-        listener:Send({request = "Move", args = {direction = "up"}})
+        listener:Send({request = "MOVEMENT", args = {direction = "up"}})
     elseif k == 'd' then
-        listener:Send({request = "Move", args = {direction = "right"}})
+        listener:Send({request = "MOVEMENT", args = {direction = "right"}})
     elseif k == 's' then
-        listener:Send({request = "Move", args = {direction = "down"}})
+        listener:Send({request = "MOVEMENT", args = {direction = "down"}})
     end
 end
 

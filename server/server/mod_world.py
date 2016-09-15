@@ -1,3 +1,4 @@
+from kernel.helpers import *
 from kernel.grid import Grid
 from kernel.dispatcher import Dispatcher, EVENT_NEW_CHUNK, EVENT_DATA_REQUEST, EVENT_SEND
 
@@ -13,7 +14,9 @@ class World(object):
             {"model" : "World", "Data": Grid().GetChunk((0, 0))}
         )
 
-world = World()
+@SafeCall
 def Initialize():
+    world = World()
     Dispatcher().Subscribe(EVENT_NEW_CHUNK, world.NewChunkHandler)
     Dispatcher().Subscribe(EVENT_DATA_REQUEST, world.DataRequestHandler)
+    return world
