@@ -11,7 +11,7 @@ class World(object):
     def DataRequestHandler(self, _, data):
         Dispatcher().Send(
             (EVENT_SEND, data['id']),
-            {"model" : "World", "Data": Grid().GetChunk((0, 0))}
+            {"event" : "WorldUpdate", "data": Grid().GetChunk((0, 0))}
         )
 
 @SafeCall

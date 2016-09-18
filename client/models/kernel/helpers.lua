@@ -1,19 +1,23 @@
 require 'string'
+require 'os'
 
 function Print(...)
-    print(table.concat(arg, " "))
+    local logFile = io.open("client.log", "a+")
+    logFile:write(os.date("%x %X ") .. table.concat({...}, " ") .. "\n")
+    logFile:flush()
+    --print(table.concat(arg, " "))
 end
 
 function Debug(...)
-    Print("[ DEBUG ]", arg)
+    Print("[ DEBUG ]", ...)
 end
 
 function Error(...)
-    Print("[ ERROR ]", arg)
+    Print("[ ERROR ]", ...)
 end
 
 function Info(...)
-    Print("[ INFO ]", arg)
+    Print("[ INFO ]", ...)
 end
 
 function Expect(cond, msg)
