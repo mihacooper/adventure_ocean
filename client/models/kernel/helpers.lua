@@ -1,29 +1,9 @@
 require 'string'
 require 'os'
 
-function Print(...)
-    local logFile = io.open("client.log", "a+")
-    logFile:write(os.date("%x %X ") .. table.concat({...}, " ") .. "\n")
-    logFile:flush()
-    --print(table.concat(arg, " "))
-end
-
-function Debug(...)
-    Print("[ DEBUG ]", ...)
-end
-
-function Error(...)
-    Print("[ ERROR ]", ...)
-end
-
-function Info(...)
-    Print("[ INFO ]", ...)
-end
-
-function Expect(cond, msg)
-    if not cond then
-        Error(msg)
-    end
+-- For usage from separate threads
+if love == nil and thread == nil then
+  love = { thread = require("love.thread") }
 end
 
 function table.copy(dst, src)
@@ -76,7 +56,18 @@ function StrReplace(str, args)
 end
 
 function ToString(val)
-    return val .. ''
+    if type(val) == type({}) then
+      local ret = "{"
+      for k, v in pairs(val) do
+          ret = ret .. string.format(" %s = %s,", ToString(k), ToString(v))
+      end
+      ret = string.sub(ret, 1, -2)
+      return ret .. " }" 
+    elseif val == nil then
+        return 'nil'
+    else
+        return val .. ''
+    end
 end
 
 function IsTable(val)
@@ -97,13 +88,32 @@ function In(val, cont)
 end
 
 function Quoted(msg)
-  return '"' .. '"'
+  return '"' .. ToString(msg) .. '"'
 end
 
-function SafeCall(func, ...)
-    local res, args = nil, {...}
-    function Runnner()
-        res = func(unpack(args))
+function Print(...)
+    local parsed = ""
+    for _, val in pairs({...}) do
+        parsed = parsed .. " " .. ToString(val) 
     end
-    return pcall(Runnner), res
+    local logChan = love.thread.getChannel("Logging")
+    logChan:push(os.date("%x %X ") .. parsed .. "\n")
+end
+
+function Debug(...)
+    Print("[ DEBUG ]", ...)
+end
+
+function Error(...)
+    Print("[ ERROR ]", ...)
+end
+
+function Info(...)
+    Print("[ INFO ]", ...)
+end
+
+function Expect(cond, msg)
+    if not cond then
+        Error(msg)
+    end
 end

@@ -11,18 +11,19 @@ ConnQueueLock = threading.Lock()
 class ConnectionHandler(SocketServer.StreamRequestHandler):
     @SilentSafeCall
     def SenderBody(self):
-        data_to_send = []
+        data_to_send = None
         with self.queue_lock:
-            while not self.queue.empty():
-                data_to_send.append(self.queue.get())
-        if len(data_to_send) > 0:
+            if not self.queue.empty():
+                data_to_send = self.queue.get()
+        if data_to_send is not None:
+            Debug("Data to send\n\t%s" % str(data_to_send))
             def JsonParser(data):
                 if isinstance(data, dict) and data.get("transmittable"):
                     return lambda: { x: data[x] for x in data["transmittable"] }
                 return data
-            jdata = json.dump(data_to_send, default = JsonParser)
+            jdata = json.dumps(data_to_send, default = JsonParser)
             Info("Send data to (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(jdata)))
-            self.wfile.write(jdata)
+            self.wfile.write(jdata + "\n")
 
     @SilentSafeCall
     def ReceiverBody(self):

@@ -7,26 +7,40 @@ local conn = {}
 function conn:Create()
     self.sendChan = love.thread.getChannel("ChannelToSend")
     self.recvChan = love.thread.getChannel("ChannelToRecv")
-    self.errChan  = love.thread.getChannel("ChannelConnErr")
-    self.thread = love.thread.newThread("conn_thread.lua")
-    if self.thread == nil then
+    self.sendChanErr = love.thread.getChannel("SendChannelErr")
+    self.recvChanErr = love.thread.getChannel("RecvChannelErr")
+
+    self.sendThread = love.thread.newThread("conn_thread.lua")
+    self.recvThread = love.thread.newThread("conn_thread.lua")
+    if self.sendThread == nil or self.recvThread == nil then
+        Error("connection", "Unable to create threads")
         return false
     end
-    self.thread:start()
-    local result = self.errChan:demand()
-    if result == "OK" then
-        return true
+    
+    self.sendThread:start("Sender")
+    self.recvThread:start("Receiver")
+    
+    -- TODO: make something less stupid than sleep
+    love.timer.sleep(2)
+    local sendThrRes = self.sendChanErr:pop()
+    if sendThrRes ~= "OK" then
+        Error(sendThrRes)
+        return false
     end
-    Error(result)
-    --[[ ]]
-    return false
+    local recvThrRes = self.recvChanErr:pop()
+    if recvThrRes ~= "OK" then
+        Error(recvThrRes)
+        return false
+    end
+    return true
 end
 
 
 function conn:Send(data)
-    local ret, jdata = SafeCall(json.encode, data, true)
+    Debug("connection", "Send message", Quoted(data))
+    local ret, jdata = pcall(json.encode, data, true)
     if not ret then
-        Error("Unable to parse data to json", data)
+        Error("connection", "Unable to parse data to json", data)
         return false
     end
     jdata = jdata .. "\n"
@@ -36,9 +50,10 @@ end
 function conn:Recv()
     local jdata = self.recvChan:pop()
     if jdata then
-        ret, data = SafeCall(json.decode, jdata)
+        Debug("connection", "Recv message", Quoted(jdata))
+        ret, data = pcall(json.decode, jdata)
         if not ret then
-            Error("Unable to parse data from json", jdata)
+            Error("connection", "Unable to parse data from json", jdata)
             return nil
         end
     end
