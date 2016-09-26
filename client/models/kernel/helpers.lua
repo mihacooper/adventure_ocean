@@ -66,7 +66,7 @@ function ToString(val)
     elseif val == nil then
         return 'nil'
     else
-        return val .. ''
+        return tostring(val)
     end
 end
 

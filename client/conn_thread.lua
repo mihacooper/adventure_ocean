@@ -1,7 +1,7 @@
 thread = require "love.thread"
 require "models.kernel.helpers"
+require "module.json"
 socket = require "socket"
-json = require "json"
 SERVER_HOST, SERVER_PORT = "127.0.0.1", 1212
 
 

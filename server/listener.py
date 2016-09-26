@@ -17,11 +17,15 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
                 data_to_send = self.queue.get()
         if data_to_send is not None:
             Debug("Data to send\n\t%s" % str(data_to_send))
-            def JsonParser(data):
-                if isinstance(data, dict) and data.get("transmittable"):
-                    return lambda: { x: data[x] for x in data["transmittable"] }
+            def PreParser(data):
+                if isinstance(data, dict):
+                    if data.get("transmittable"):
+                        return { x: PreParser(data[x]) for x in data["transmittable"] }
+                    else:
+                        return { x: PreParser(data[x]) for x in data.keys() }
                 return data
-            jdata = json.dumps(data_to_send, default = JsonParser)
+            data_to_send = PreParser(data_to_send)
+            jdata = json.dumps(data_to_send)
             Info("Send data to (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(jdata)))
             self.wfile.write(jdata + "\n")
 

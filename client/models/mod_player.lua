@@ -1,12 +1,15 @@
 local model = {}
 
 function model:Initialize(context)
-  self.x, self.y = 0, 0
+  if context.player == nil then
+    context.player = {}
+  end
+  context.player.x, context.player.y = 0, 0
 end
 
 function model:PlayerUpdate(context, data)
-  self.x, self.y = data.x, data.y
-  Debug("player", "Data updated:\n", self)
+  context.player.x, context.player.y = data.x, data.y
+  Debug("player", "Data updated:\n", context.player)
 end
 
 function model:Keypressed(context, k)

@@ -1,7 +1,10 @@
 from dispatcher import Dispatcher, EVENT_NEW_CHUNK, EVENT_INIT
 
-CHUNK_WIDTH = 50
-CHUNK_HEIGHT = 50
+CELL_WIDTH = 100
+CELL_HEIGHT = 100
+
+CHUNK_WIDTH = 100
+CHUNK_HEIGHT = 100
 
 class Grid(object):
     class __Grid:
@@ -53,9 +56,17 @@ class Grid(object):
             return self.grid[chunk][local[0]][local[1]]
 
         def GetChunk(self, pos):
-            if self.grid[pos] is None:
+            if self.grid.get(pos) is None:
                 self.CreateChunk(pos)
             return self.grid[pos]
+
+        def GetSettings(self):
+            return {
+                "CellWidth"   : CELL_WIDTH,
+                "CellHeight"  : CELL_HEIGHT,
+                "ChunkWidth"  : CHUNK_WIDTH,
+                "ChunkHeight" : CHUNK_HEIGHT
+            }
 
     instance = None
 

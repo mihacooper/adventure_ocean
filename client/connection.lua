@@ -1,6 +1,6 @@
 require "models.kernel.helpers"
+require "module.json"
 socket = require "socket"
-json = require "json"
 
 local conn = {}
 
@@ -49,13 +49,14 @@ end
 
 function conn:Recv()
     local jdata = self.recvChan:pop()
-    if jdata then
-        Debug("connection", "Recv message", Quoted(jdata))
-        ret, data = pcall(json.decode, jdata)
-        if not ret then
-            Error("connection", "Unable to parse data from json", jdata)
-            return nil
-        end
+    if not jdata then
+      return nil
+    end
+    Debug("connection", "Recv message", Quoted(jdata))
+    local ret, data = pcall(json.decode, jdata)
+    if not ret then
+        Error("connection", "Unable to parse data from json, err: ", data)
+        return nil
     end
     return data
 end

@@ -73,7 +73,6 @@ Dispatcher().DeclareEvents(
     EVENT_INIT          = 0,
     EVENT_NEW_CHUNK     = 1,
     EVENT_SEND          = 2,
-    EVENT_WORLD_REQUEST = "WORLD_REQ",
     EVENT_NEW_CLIENT    = 4,
     EVENT_MOVEMENT      = "MOVEMENT"
 )

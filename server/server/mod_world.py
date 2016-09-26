@@ -1,6 +1,6 @@
 from kernel.helpers import *
 from kernel.grid import Grid
-from kernel.dispatcher import Dispatcher, EVENT_NEW_CHUNK, EVENT_WORLD_REQUEST, EVENT_SEND
+from kernel.dispatcher import Dispatcher, EVENT_NEW_CHUNK, EVENT_SEND
 
 class World(object):
     def NewChunkHandler(self, _, chunk):
@@ -8,16 +8,32 @@ class World(object):
             for cell in col:
                 cell.append(1)
 
+    @SafeCall
     def DataRequestHandler(self, _, id, data):
-        location = (data['location']['x'], data['location']['y'])
+        x, y = data['location']['x'], data['location']['y']
         Dispatcher().Send(
             (EVENT_SEND, id),
-            {"event" : "WorldUpdate", "data": Grid().GetChunk(location)}
+            {
+                "event" : "ChunkUpdate",
+                "data":
+                    {
+                        "location": {'x': x, 'y': y},
+                        "data" : Grid().GetChunk((x, y))
+                    }
+            }
+        )
+
+    @SafeCall
+    def SettingsRequestHandler(self, _, id, args):
+        Dispatcher().Send(
+            (EVENT_SEND, id),
+            {"event" : "WorldSettings", "data": Grid().GetSettings()}
         )
 
 @SafeCall
 def Initialize():
     world = World()
     Dispatcher().Subscribe(EVENT_NEW_CHUNK, world.NewChunkHandler)
-    Dispatcher().Subscribe(EVENT_WORLD_REQUEST, world.DataRequestHandler)
+    Dispatcher().Subscribe("ChunkRequest", world.DataRequestHandler)
+    Dispatcher().Subscribe("WorldSettings", world.SettingsRequestHandler)
     return world
