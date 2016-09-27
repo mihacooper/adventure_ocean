@@ -1,3 +1,4 @@
+import random
 from kernel.helpers import *
 from kernel.grid import Grid
 from kernel.dispatcher import Dispatcher, EVENT_NEW_CHUNK, EVENT_SEND
@@ -6,7 +7,7 @@ class World(object):
     def NewChunkHandler(self, _, chunk):
         for col in Grid().GetChunk(chunk):
             for cell in col:
-                cell.append(1)
+                cell.append(int(random.random() * 100) % 2 + 1)
 
     @SafeCall
     def DataRequestHandler(self, _, id, data):

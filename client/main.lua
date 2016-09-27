@@ -8,12 +8,15 @@ Models = {}
 Context = {
   states = {},
   resources = {},
+  window = {}, 
 }
 
 local IsInitialized = false
 function love.load()
   local window_width = love.graphics.getWidth()
   local window_height = love.graphics.getHeight()
+  Info(string.format("Window size = {%s, %s}", window_width, window_height))
+  --[[
   local minor = 8
   if love.getVersion ~= nil then
     _, minor, _, _ = love.getVersion()
@@ -25,6 +28,8 @@ function love.load()
   else
     love.window.setMode(window_width, window_height, {fullscreen = true})
   end
+  ]]
+  Context.window.Width, Context.window.Height = window_width, window_height
   
   -- Log thread
   logger = love.thread.newThread("log_thread.lua")
