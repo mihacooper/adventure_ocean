@@ -1,107 +1,47 @@
-local model = { grid = {} }
+local context = require("models.kernel.context")
+local Grid = require("models.kernel.grid")
 
---[[ 
-  Make this functions global
-]]
-function GetAllCoords(context, x, y)
+local model = { }
+
+function model:Initialize()
+    context.grid = Grid()
+    context.connection:Send({request = "WorldSettings", args = {}})
+    context.resources['background.grass'] = love.graphics.newImage("resources/grass.png")
+    context.resources['background.earth'] = love.graphics.newImage("resources/earth.png")
 end
 
-function model:Initialize(context)
-  local grid = {}
+function model:Draw(data)
+    if not context.states["World.Initialized"] then
+        return
+    end
   
-  function grid:GetCellCoord(x, y)
-    function GlobalToCell(crd, width)
-      if crd >= 0 then
-          return math.floor(crd / width)
-      else
-          return math.ceil((crd + 1) / width) - 1
-      end
+    if not data.level == 1 then
+        return
     end
-    local cell = { x = 0, y = 0 }
-    cell.x  = GlobalToCell( x, self.CellWidth)
-    cell.y  = GlobalToCell( y, self.CellHeight)
-    return cell.x, cell.y
-  end
-  
-  function grid:GetChunkCoord(x, y) -- from Cell coords
-    function CellToChunk(crd, width)
-      if crd >= 0 then
-          return math.floor(crd / width), crd % width + 1
-      else
-          return math.ceil((crd + 1) / width) - 1, math.abs(crd) % width + 1
-      end
-    end
-      
-    local chunk = { x = 0, y = 0}
-    local lcell = { x = 0, y = 0} -- local for chunk
-    chunk.x, lcell.x = CellToChunk(x, self.ChunkWidth)
-    chunk.y, lcell.y = CellToChunk(y, self.ChunkHeight)
-    return chunk.x, chunk.y, lcell.x, lcell.y
-  end
-  
-  function grid:GetCell(x, y)
-    local chunk_x, chunk_y, cell_x, cell_y = self:GetChunkCoord(x, y)
-    if not self[chunk_x] then
-      Error('grid', string.format("Not found: grid[%s]", chunk_x))
-      return nil
-    end
-    if not self[chunk_x][chunk_y] then
-      Error('grid', string.format("Not found: grid[%s][%s]", chunk_x, chunk_y))
-      return nil
-    end
-    if not self[chunk_x][chunk_y][cell_x] then
-      Error('grid', string.format("Not found: grid[%s][%s][%s]", chunk_x, chunk_y, cell_x))
-      return nil
-    end
-    if not self[chunk_x][chunk_y][cell_x][cell_y] then
-      Error('grid', string.format("Not found: grid[%s][%s][%s][%s]", chunk_x, chunk_y, cell_x, cell_y))
-      return nil
-    end
-    return self[chunk_x][chunk_y][cell_x][cell_y]
-  end
-
-  function grid:GetCellFromGlobal(x, y)
-    local cell_x, cell_y = self:GetCellCoord(x, y)
-    return self:GetCell(cell_x, cell_y)
-  end
- 
-  context.grid = grid
-  context.connection:Send({request = "WorldSettings", args = {}})
-  context.resources['background.grass'] = love.graphics.newImage("resources/grass.png")
-  context.resources['background.earth'] = love.graphics.newImage("resources/earth.png")
-end
-
-function model:Draw(context, data)
-  if not context.states["World.Initialized"] then
-    return
-  end
-  
-  if data.level == 1 then
+    
     local lux, luy = context.grid:GetCellCoord(context.player.x - context.window.Width / 2,
                         context.player.y - love.graphics.getHeight() / 2)
     local rdx, rdy = context.grid:GetCellCoord(context.player.x + context.window.Height / 2,
                         context.player.y + love.graphics.getHeight() / 2)
     for x = lux, rdx + 1, 1 do
-      for y = luy, rdy + 1, 1 do
-        local cell = context.grid:GetCell(x, y)
-        if cell and cell ~= nil then
-          local draw_x, draw_y = x * context.grid.CellWidth - context.player.x + context.window.Width / 2,
-                                 y * context.grid.CellHeight - context.player.y + context.window.Height / 2
-          local img = nil
-          if cell[1] == 1 then
-            img = context.resources['background.grass']
-          elseif cell[1] == 2 then
-            img = context.resources['background.earth']
-          end
-          love.graphics.draw(img, draw_x, draw_y)--, math.pi * 2, 1, 1, 50, 50)
+        for y = luy, rdy + 1, 1 do
+            local cell = context.grid:GetCell(x, y)
+            if cell and cell ~= nil then
+                local draw_x, draw_y = x * context.grid.CellWidth - context.player.x + context.window.Width / 2,
+                             y * context.grid.CellHeight - context.player.y + context.window.Height / 2
+                local img = nil
+                if cell[1] == 1 then
+                    img = context.resources['background.grass']
+                elseif cell[1] == 2 then
+                    img = context.resources['background.earth']
+                end
+                love.graphics.draw(img, draw_x, draw_y)--, math.pi * 2, 1, 1, 50, 50)
+            end
         end
-      end
     end
-    
-  end
 end
 
-function model:Update(context, dt)
+function model:Update(dt)
   if not context.states["World.Initialized"] then
     return
   end
@@ -124,7 +64,7 @@ function model:Update(context, dt)
   end  
 end
 
-function model:WorldSettings(context, settings)
+function model:WorldSettings(settings)
   context.grid.CellWidth   = settings.CellWidth
   context.grid.CellHeight  = settings.CellHeight
   context.grid.ChunkWidth  = settings.ChunkWidth
@@ -133,7 +73,7 @@ function model:WorldSettings(context, settings)
   context.states["World.Initialized"] = true
 end
 
-function model:ChunkUpdate(context, data)
+function model:ChunkUpdate(data)
   local x, y = data.location.x, data.location.y
   if context.grid[x] == nil then
     context.grid[x] = {}

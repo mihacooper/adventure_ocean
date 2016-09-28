@@ -1,16 +1,9 @@
 math = require "math"
 connection = require "connection"
 queue = require "models.kernel.queue"
+context = require "models.kernel.context"
 
---io.stdout:setvbuf('no')
-
-Models = {}
-Context = {
-  states = {},
-  resources = {},
-  window = {}, 
-}
-
+local models = {}
 local IsInitialized = false
 function love.load()
   local window_width = love.graphics.getWidth()
@@ -29,7 +22,7 @@ function love.load()
     love.window.setMode(window_width, window_height, {fullscreen = true})
   end
   ]]
-  Context.window.Width, Context.window.Height = window_width, window_height
+  context.window.Width, context.window.Height = window_width, window_height
   
   -- Log thread
   logger = love.thread.newThread("log_thread.lua")
@@ -38,16 +31,16 @@ function love.load()
     love.event.quit(0)
   end
   logger:start()
-  Context.logger = logger
+  context.logger = logger
 
   if not connection:Create() then
     Error("system", "Unable to create Listener, quit")
     love.event.quit(0)
   end
-  Context.connection = connection
+  context.connection = connection
 
-  Context.events = queue.Create()
-  Context.events:Put({ event = "Initialize", data = {} })
+  context.events = queue.Create()
+  context.events:Put({ event = "Initialize", data = {} })
   local files = love.filesystem.getDirectoryItems("models")
   for _, file in pairs(files) do
     if love.filesystem.isFile("models/" .. file) and string.gmatch(file, "mod_.*.lua")() ~= "" then
@@ -57,7 +50,7 @@ function love.load()
         love.event.quit(0)
       end
       Debug("system", "Model from " .. file .. " was loaded")
-      table.insert(Models, model)
+      table.insert(models, model)
     end
   end
   -- Handle Initialize event
@@ -68,15 +61,15 @@ end
 function HandleAllMessage()
   local sendToAll = function(msg)
     local ev, data = msg.event, msg.data
-    for _, mod in pairs(Models) do
+    for _, mod in pairs(models) do
       local func = mod[ev]
       if func then
-        func(mod, Context, data) -- 'self' is first param
+        func(mod, data) -- 'self' is first param
       end
     end
   end
   
-  for msg in function() return Context.events:Pop() end do
+  for msg in function() return context.events:Pop() end do
     Debug("system", "Going to handle internal event " .. Quoted(msg.event))
     sendToAll(msg)
   end
@@ -88,13 +81,13 @@ function love.update(dt)
   end
   
   -- Messages from server
-  for msg in function() return Context.connection:Recv() end do
+  for msg in function() return context.connection:Recv() end do
     Debug("system", "Going to handle server msg " .. Quoted(msg))
-    Context.events:Put({ event = msg.event , data = msg.data })
+    context.events:Put({ event = msg.event , data = msg.data })
   end
   
   -- Regular update
-  Context.events:Put({ event = "Update", data = { dt = dt } })
+  context.events:Put({ event = "Update", data = { dt = dt } })
   
   HandleAllMessage()
 end
@@ -111,7 +104,7 @@ function love.keypressed(k)
     love.event.quit(0)
   end
   Debug("system", "Put event keypressed " .. Quoted(k))
-  Context.events:Put({ event = "Keypressed", data = { key = k } })
+  context.events:Put({ event = "Keypressed", data = { key = k } })
 end
 
 function love.draw()
@@ -120,8 +113,8 @@ function love.draw()
   end
   
   -- Drawing should be implemented right now
-  for _, level in ipairs({1, 2, 3}) do
-    Context.events:Put({ event = "Draw", data = { level = level } }) 
+  for level = 1, 3, 1 do
+    context.events:Put({ event = "Draw", data = { level = level } }) 
     HandleAllMessage()
   end  
 end
