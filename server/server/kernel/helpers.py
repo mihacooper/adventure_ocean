@@ -19,7 +19,8 @@ def Info(msg):
     LogMessage("[INF] " + str(msg))
 
 def Debug(msg):
-    LogMessage("[DBG] " + str(msg))
+    pass
+    #LogMessage("[DBG] " + str(msg))
 
 
 class SafeException(Exception): # Use only with SafeCall!!!

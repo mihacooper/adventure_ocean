@@ -32,12 +32,12 @@ class Dispatcher(object):
 
         @SafeCall
         def __SendImpl(self, event, args, kwargs):
-            Info("Send event %s(%s, %s)" % (self.GetEventName(event), str(args), str(kwargs)))
+            Debug("Send event %s(%s, %s)" % (self.GetEventName(event), str(args), str(kwargs)))
             with self.lock:
                 recvs = self.subscribes.get(event)
                 if recvs is not None:
                     for recv in recvs:
-                        Info("Pass event %s to handler %s" % (self.GetEventName(event), str(recv)))
+                        Debug("Pass event %s to handler %s" % (self.GetEventName(event), str(recv)))
                         recv(event, *args, **kwargs)
                 else:
                     Info("No one handler was found for event %s" % self.GetEventName(event))

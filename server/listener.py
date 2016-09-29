@@ -26,14 +26,14 @@ class ConnectionHandler(SocketServer.StreamRequestHandler):
                 return data
             data_to_send = PreParser(data_to_send)
             jdata = json.dumps(data_to_send)
-            Info("Send data to (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(jdata)))
+            Debug("Send data to (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(jdata)))
             self.wfile.write(jdata + "\n")
 
     @SilentSafeCall
     def ReceiverBody(self):
         data = self.rfile.readline().strip()
         if data:
-            Info("Received data (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(data)))
+            Debug("Received data (%s:%d)\n\t%s" % (self.client_address[0], self.client_address[1], str(data)))
             jdata = json.loads(data)
             if jdata.get('request')is None or jdata.get('args') is None:
                 raise Exception("Invalid request format")

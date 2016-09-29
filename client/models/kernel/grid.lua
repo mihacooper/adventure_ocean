@@ -33,20 +33,8 @@ return function ()
 
     function grid:GetCell(x, y)
         local chunk_x, chunk_y, cell_x, cell_y = self:GetChunkCoord(x, y)
-        if not self[chunk_x] then
-            Error('grid', string.format("Not found: grid[%s]", chunk_x))
-            return nil
-        end
-        if not self[chunk_x][chunk_y] then
-            Error('grid', string.format("Not found: grid[%s][%s]", chunk_x, chunk_y))
-            return nil
-        end
-        if not self[chunk_x][chunk_y][cell_x] then
-            Error('grid', string.format("Not found: grid[%s][%s][%s]", chunk_x, chunk_y, cell_x))
-            return nil
-        end
-        if not self[chunk_x][chunk_y][cell_x][cell_y] then
-            Error('grid', string.format("Not found: grid[%s][%s][%s][%s]", chunk_x, chunk_y, cell_x, cell_y))
+        if not self[chunk_x] or not self[chunk_x][chunk_y] or not
+                    self[chunk_x][chunk_y][cell_x] or not self[chunk_x][chunk_y][cell_x][cell_y] then
             return nil
         end
         return self[chunk_x][chunk_y][cell_x][cell_y]

@@ -3,8 +3,8 @@ from dispatcher import Dispatcher, EVENT_NEW_CHUNK, EVENT_INIT
 CELL_WIDTH = 100
 CELL_HEIGHT = 100
 
-CHUNK_WIDTH = 100
-CHUNK_HEIGHT = 100
+CHUNK_WIDTH = 20
+CHUNK_HEIGHT = 20
 
 class Grid(object):
     class __Grid:

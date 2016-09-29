@@ -1,10 +1,8 @@
 local context = require("models.kernel.context")
-local Grid = require("models.kernel.grid")
 
 local model = { }
 
 function model:Initialize()
-    context.grid = Grid()
     context.connection:Send({request = "WorldSettings", args = {}})
     context.resources['background.grass'] = love.graphics.newImage("resources/grass.png")
     context.resources['background.earth'] = love.graphics.newImage("resources/earth.png")
@@ -20,11 +18,11 @@ function model:Draw(data)
     end
     
     local lux, luy = context.grid:GetCellCoord(context.player.x - context.window.Width / 2,
-                        context.player.y - love.graphics.getHeight() / 2)
-    local rdx, rdy = context.grid:GetCellCoord(context.player.x + context.window.Height / 2,
-                        context.player.y + love.graphics.getHeight() / 2)
-    for x = lux, rdx + 1, 1 do
-        for y = luy, rdy + 1, 1 do
+                        context.player.y - context.window.Height / 2)
+    local rdx, rdy = context.grid:GetCellCoord(context.player.x + context.window.Width / 2,
+                        context.player.y + context.window.Height / 2)
+    for x = lux, rdx, 1 do
+        for y = luy, rdy, 1 do
             local cell = context.grid:GetCell(x, y)
             if cell and cell ~= nil then
                 local draw_x, draw_y = x * context.grid.CellWidth - context.player.x + context.window.Width / 2,
@@ -55,9 +53,9 @@ function model:Update(dt)
   end
   
   if context.player and context.player.x and context.player.y then
-    local cx,cy = context.grid:GetChunkCoord(context.player.x, context.player.y)
-    for x = cx - 1, cx + 1, 1 do
-      for y = cy - 1, cy + 1, 1 do
+    local cx, cy = context.grid:GetChunkCoord(context.grid:GetCellCoord(context.player.x, context.player.y))
+    for x = cx - 5, cx + 5, 1 do
+      for y = cy - 5, cy + 5, 1 do
         SendChunkRequest(x, y)
       end
     end

@@ -32,6 +32,7 @@ function conn:Create()
         Error(recvThrRes)
         return false
     end
+    Info("connection", "Threads started")
     return true
 end
 

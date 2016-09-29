@@ -16,14 +16,19 @@ end
 function model:Keypressed(k)
     local key = k.key
     Debug("player", "handle keypressed with key=" .. key)
-    if     key == 'a' then
-        context.connection:Send({request = "MOVEMENT", args = {direction = "left"}})
-    elseif key == 'w' then
-        context.connection:Send({request = "MOVEMENT", args = {direction = "up"}})
-    elseif key == 'd' then
-        context.connection:Send({request = "MOVEMENT", args = {direction = "right"}})
-    elseif key == 's' then
-        context.connection:Send({request = "MOVEMENT", args = {direction = "down"}})
+    local map = {
+        a = { 'left',  { -20,   0 } },
+        w = { 'up',    {   0, -20 } },
+        d = { 'right', {  20,   0 } },
+        s = { 'down',  {   0,  20 } },
+    }
+    if map[key] then
+        local strDir = map[key][1]
+        context.connection:Send({request = "MOVEMENT", args = {direction = strDir}})
+        context.player.x = context.player.x + map[key][2][1]
+        context.player.y = context.player.y + map[key][2][2]
+        local newPlayerCoord = { x = context.player.x, y = context.player.y}
+        context.filter:AddExpectation('PlayerUpdate', newPlayerCoord)
     end
 end
 

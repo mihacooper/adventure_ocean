@@ -101,7 +101,7 @@ function Print(...)
 end
 
 function Debug(...)
-    Print("[ DEBUG ]", ...)
+    --Print("[ DEBUG ]", ...)
 end
 
 function Error(...)
